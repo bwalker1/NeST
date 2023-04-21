@@ -1,0 +1,40 @@
+name: nest
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - nomkl
+  - R=4.1
+  - r-devtools
+  - r-ggpubr
+  - r-rcppeigen
+  - r-rspectra
+  - numba<0.56
+  - matplotlib<3.7
+  - pandas<2
+  - seaborn
+  - scikit-learn
+  - python-igraph
+  - leidenalg
+  - ipython
+  - jupyterlab
+  - numpy
+  - scipy
+  - scanpy=1.8.2
+  - pillow
+  - tqdm
+  - networkx<3.0
+  - statsmodels
+  - rpy2
+  - anndata2ri
+  - pip
+  - pip:
+      - squidpy
+      - mygene
+      - shapely
+      - goatools
+      - python-igraph
+      - colorcet
+      - nest-analysis
