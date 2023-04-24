@@ -81,7 +81,7 @@ class CellChat:
             adata.uns['cellchat_res'] = res
         v = res[res['interaction_name_2'] == interaction][np.array(['target', 'prob'])].groupby('target').sum()
         # TODO: check that we have a nonzero number of rows in v
-        v.index = adata.obs['class'].cat.categories[v.index - 1]
+        v.index = adata.obs[group_by].cat.categories[v.index - 1]
         # fill in any missing categories with 0 for next step lookup to work
         for s in set(np.unique(adata.obs[group_by])) - set(v.index):
             v.loc[s, 'prob'] = 0
