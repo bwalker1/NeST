@@ -15,7 +15,8 @@ created by:
 2. Navigate inside the repository in a command prompt
 3. Create the conda environment using the provided environment file: `conda env create environment.yml`
 4. Activate the conda environment: `conda activate nest`
-5. To run examples, navigate inside the `examples/` directory and run `jupyter notebook`.
+5. Install the NeST package locally: `pip install .`
+6. To run examples, navigate inside the `examples/` directory and run `jupyter notebook`.
 
 NeST can be directly installed through pip as 
 `pip install nest-analysis`
