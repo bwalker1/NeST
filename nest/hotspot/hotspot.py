@@ -79,7 +79,7 @@ def compute_gene_hotspots(adata, gene_list=None, verbose=False, return_hotspot_c
 def compute_hotspots(adata, min_samples, eps, input_key=None, output_key=None,
                      input_data=None, return_regions=False,
                      min_size=None,
-                     input_threshold=None, core_only=True, method=None):
+                     input_threshold=None, core_only=False, method=None):
     if input_data is not None:
         inds = input_data
     else:
