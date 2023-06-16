@@ -24,7 +24,7 @@ NeST can be directly installed through pip as
 
 ## Usage
 
-Here we overview the main functions available in NeST along with examples from Slideseq (Stickels et al 2021) and Seqfish [cite] datasets. See `/examples` for further information and full running example.
+Here we overview the main functions available in NeST along with examples from Slideseq (Stickels et al 2021) and Seqfish (Moffitt et al 2018) datasets. See `/examples` for further information and full running example.
 
 ### Nested Hierarchical Structure
 
