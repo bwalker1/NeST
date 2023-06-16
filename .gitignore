@@ -154,5 +154,5 @@ cython_debug/
 examples/images/*
 examples/gene2go
 examples/go-basic.obo
-# examples/*
-./data/
+examples/data
+data/

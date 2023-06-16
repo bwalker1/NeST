@@ -45,14 +45,14 @@ By computing boundaries (parameter `alpha_max` controls how tightly the boundary
 `nest.compute_multi_boundaries(adata, alpha_max=0.005, alpha_min=0.00001)
 nest.plot.multi_hotspots(adata)`
 
-![All multi hotspots](https://github.com/bwalker1/NeST/blob/main/images/multi_hotspot.png?raw=true)
+![All multi hotspots](https://github.com/bwalker1/NeST/blob/master/images/multi_hotspot.png?raw=true)
 
 Nested structure plot allows for visualization of the nested hierarchical structure in the dataset, showing the existence of two layers (of overlapping hotspots) in the hippocampal formation, and one layer everywhere else in the dataset.
 
 `nest.plot.nested_structure_plot(adata, figsize=(5, 1.5), fontsize=8, legend_ncol=4, alpha_high=0.75, alpha_low=0.15,
                                legend_kwargs={'loc':"upper left", 'bbox_to_anchor':(1, 1.03)})`
 
-![Nested structure plot](https://github.com/bwalker1/NeST/blob/main/images/nested_plot.png?raw=true)
+![Nested structure plot](https://github.com/bwalker1/NeST/blob/master/images/nested_plot.png?raw=true)
 
 NeST is by design highly explainable as all coexpression hotspots derive directly from an ensemble of genes. We can confirm that the identified hotspots are meaningful by looking at these markers for the five coexpression hotspots representing the hippocampal formation.
 
@@ -63,5 +63,5 @@ NeST is by design highly explainable as all coexpression hotspots derive directl
 `fig, ax = nest.plot.tracks_plot(adata, markers_sub, width=2.5, track_height=0.1, fontsize=6, 
                                 marked_genes=[])`
 
-![Tracks plot](https://github.com/bwalker1/NeST/blob/main/images/tracks.png?raw=true)
+![Tracks plot](https://github.com/bwalker1/NeST/blob/master/images/tracks.png?raw=true)
 
