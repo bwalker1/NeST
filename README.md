@@ -18,13 +18,15 @@ created by:
 5. Install the NeST package locally: `pip install .`
 6. To run examples, navigate inside the `examples/` directory and run `jupyter notebook`.
 
-NeST can be directly installed through pip as 
-`pip install nest-analysis`
+NeST can also be directly installed through pip as 
+`pip install nest-analysis`.
+
+Installation may take several minutes on a typical computer.
 
 
 ## Usage
 
-Here we overview the main functions available in NeST along with examples from Slideseq (Stickels et al 2021) and Seqfish (Moffitt et al 2018) datasets. See `/examples` for further information and full running example.
+Here we overview the main functions available in NeST along with examples from Slideseq (Stickels et al 2021) and Seqfish (Moffitt et al 2018) datasets. See `/examples` for further information and full running example. Example analysis typically takes ~5-10 minutes on a typical computer, depending on dataset.
 
 ### Nested Hierarchical Structure
 
