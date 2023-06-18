@@ -35,14 +35,9 @@ class CellChat:
         self.robjects.r('''
                     f <- function(s, group.by) {
                         assay(s, "logcounts") = assay(s, "X")
-                        #print(s)
-                        #print(dim(pos))
-                        # Save this for testing analysis
-                        save(s, file="/Users/blw/Documents/data/sce.dat")
+
 
                         cellchat <- createCellChat(object = s, group.by = group.by)
-
-                        print(cellchat)
 
                         CellChatDB <- CellChatDB.mouse
                         library(dplyr)
@@ -56,14 +51,9 @@ class CellChat:
                         cellchat <- identifyOverExpressedInteractions(cellchat)
                         cellchat <- projectData(cellchat, PPI.mouse)
 
-                        #prior.thresholds <- list("Secreted Signaling"=0.1)
-                        #pos <- matrix(rnorm(13938*2), 13938)
-                        # TODO: figure out the right way to get the stuff loaded
                         library(Matrix)
                         cellchat <- computeCommunProb(cellchat, #prior.thresholds=prior.thresholds,
                                                       type="truncatedMean", trim=0.05)
-
-                        print(cellchat)
 
                         df.net = subsetCommunication(cellchat)
 
