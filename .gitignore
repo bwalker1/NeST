@@ -152,7 +152,13 @@ cython_debug/
 .idea/
 .DS_Store
 examples/images/*
-examples/gene2go
-examples/go-basic.obo
 examples/data
 data/
+
+# goatools related files
+examples/gene2go
+examples/go-basic.obo
+examples/go_results/*
+examples/gene_result.txt
+
+examples/genes_ncbi_10090_proteincoding.py

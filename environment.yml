@@ -29,9 +29,9 @@ dependencies:
   - statsmodels
   - rpy2
   - anndata2ri
+  - squidpy
   - pip
   - pip:
-      - squidpy
       - mygene
       - shapely
       - goatools

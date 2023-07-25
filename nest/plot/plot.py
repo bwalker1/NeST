@@ -160,8 +160,7 @@ def plot_similarity_map(adata, idx, adata_ref=None, ax=None, linewidth=0.5, line
     if ax is None:
         fig, ax = plt.subplots()
     try:
-        scale_factor = list(adata.uns['spatial'].values())[0]['scalefactors'][
-            'tissue_hires_scalef']
+        scale_factor = list(adata.uns['spatial'].values())[0]['scalefactors']['tissue_hires_scalef']
     except KeyError:
         if scale is not None:
             scale_factor = scale
