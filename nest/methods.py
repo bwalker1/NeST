@@ -10,6 +10,7 @@ import sys
 
 # TODO: do all the citations and stuff properly
 
+
 class CellChat:
     def __init__(self):
         pass
@@ -19,9 +20,10 @@ class CellChat:
         import rpy2.robjects as robjects
         from rpy2.robjects.packages import importr
         import anndata2ri
+
         anndata2ri.activate()
-        #from rpy2.robjects import pandas2ri
-        #pandas2ri.activate()
+        # from rpy2.robjects import pandas2ri
+        # pandas2ri.activate()
         self.robjects = robjects
         self.anndata2ri = anndata2ri
 
@@ -37,7 +39,8 @@ class CellChat:
         # get rid of extraneous columns that may not convert properly anyway
         adata.obs = adata.obs.loc[:, [group_by]]
 
-        self.robjects.r('''
+        self.robjects.r(
+            """
                     f <- function(s, pos=NULL) {
                         assay(s, "logcounts") = assay(s, "X")
 
@@ -64,28 +67,36 @@ class CellChat:
 
                         df.net
                     }
-                ''' % group_by)
+                """
+            % group_by
+        )
 
-        out = self.robjects.r['f'](adata)
-        df = pd.DataFrame(out).T
-        df.columns = out.colnames
-        return df
+        out = self.robjects.r["f"](adata)
+        # df = pd.DataFrame(out).T
+        # df.columns = out.colnames
+        return out
 
-    def cellchat_score(self, adata, interaction, key="cellchat_score", group_by="class", rerun=False):
+    def cellchat_score(
+        self, adata, interaction, key="cellchat_score", group_by="class", rerun=False
+    ):
         try:
             if rerun:
                 raise KeyError
-            res = adata.uns['cellchat_res']
+            res = adata.uns["cellchat_res"]
         except KeyError as e:
             res = self.run(adata, group_by)
-            adata.uns['cellchat_res'] = res
-        v = res[res['interaction_name_2'] == interaction][np.array(['target', 'prob'])].groupby('target').sum()
+            adata.uns["cellchat_res"] = res
+        v = (
+            res[res["interaction_name_2"] == interaction][np.array(["target", "prob"])]
+            .groupby("target")
+            .sum()
+        )
         # TODO: check that we have a nonzero number of rows in v
-        v.index = adata.obs[group_by].cat.categories[v.index - 1]
         # fill in any missing categories with 0 for next step lookup to work
         for s in set(np.unique(adata.obs[group_by])) - set(v.index):
-            v.loc[s, 'prob'] = 0
-        adata.obs[key] = np.array(v.loc[adata.obs[group_by], 'prob'])
+            v.loc[s, "prob"] = 0
+        adata.obs[key] = np.array(v.loc[adata.obs[group_by], "prob"])
+
 
 class BayesSpace:
     """
@@ -101,6 +112,7 @@ class BayesSpace:
         import rpy2.robjects as robjects
         from rpy2.robjects.packages import importr
         import anndata2ri
+
         anndata2ri.activate()
         self.robjects = robjects
         self.anndata2ri = anndata2ri
@@ -112,9 +124,10 @@ class BayesSpace:
 
         # converter does not currently seem to support sparse matrix entries
         adatasub = adata.copy()
-        adatasub.obs = pd.DataFrame({'row': adatasub.obs['array_row'],
-                                    'col': adatasub.obs['array_col']},
-                                    index=adatasub.obs.index)
+        adatasub.obs = pd.DataFrame(
+            {"row": adatasub.obs["array_row"], "col": adatasub.obs["array_col"]},
+            index=adatasub.obs.index,
+        )
         try:
             adatasub.X = adatasub.X.toarray()
         except AttributeError:
@@ -123,11 +136,12 @@ class BayesSpace:
         adatasub.raw = None
         adatasub.obsp = None
         try:
-            del adatasub.layers['exp']
+            del adatasub.layers["exp"]
         except KeyError:
             pass
 
-        self.robjects.r('''
+        self.robjects.r(
+            """
             f <- function(s, q) {
                 assay(s, "logcounts") = assay(s, "X")
                 s <- spatialPreprocess(s, platform="Visium", n.PCs=16, n.HVGs=2000, log.normalize=FALSE)
@@ -138,17 +152,16 @@ class BayesSpace:
                 metadata(s)$BayesSpace.data <- NULL
                 s
             }
-        ''')
+        """
+        )
         output = sys.stdout if verbose else None
-        utils = importr('utils')
-        out = self.robjects.r['f'](adatasub, self.regions)
+        utils = importr("utils")
+        out = self.robjects.r["f"](adatasub, self.regions)
 
         # copy the output labels back over
-        adata.obs[self.label_name] = out.obs['spatial.cluster']
+        adata.obs[self.label_name] = out.obs["spatial.cluster"]
 
         return
-
-
 
 
 class SpaGCN:
@@ -157,7 +170,12 @@ class SpaGCN:
         self.label_name = label_name
 
     def fit(self, adata, img=None, verbose=False, **kwargs):
-        import SpaGCN as spg
+        try:
+            import SpaGCN as spg
+        except ImportError:
+            raise ImportError(
+                "SpaGCN not installed. Please install with `pip install spagcn`"
+            )
         import scanpy as sc
         import torch
         import random
@@ -184,13 +202,19 @@ class SpaGCN:
             if img is not None:
                 s = 1
                 b = 49
-                adj = spg.calculate_adj_matrix(x=x_pixel, y=y_pixel, x_pixel=x_pixel,
-                                               y_pixel=y_pixel, image=img,
-                                               beta=b,
-                                               alpha=s, histology=True)
+                adj = spg.calculate_adj_matrix(
+                    x=x_pixel,
+                    y=y_pixel,
+                    x_pixel=x_pixel,
+                    y_pixel=y_pixel,
+                    image=img,
+                    beta=b,
+                    alpha=s,
+                    histology=True,
+                )
             else:
-                x = adatasub.obsm['spatial'][:, 0]
-                y = adatasub.obsm['spatial'][:, 1]
+                x = adatasub.obsm["spatial"][:, 0]
+                y = adatasub.obsm["spatial"][:, 1]
                 adj = spg.calculate_adj_matrix(x=x, y=y, histology=False)
 
             p = 0.5
@@ -212,9 +236,16 @@ class SpaGCN:
             clf.set_l(l)
 
             # Run
-            clf.train(adatasub, adj, init_spa=True, init="kmeans", n_clusters=self.regions, tol=5e-3,
-                      lr=0.05,
-                      max_epochs=500)
+            clf.train(
+                adatasub,
+                adj,
+                init_spa=True,
+                init="kmeans",
+                n_clusters=self.regions,
+                tol=5e-3,
+                lr=0.05,
+                max_epochs=500,
+            )
             y_pred, prob = clf.predict()
             adata.obs[self.label_name] = pd.Categorical(y_pred)
 
@@ -223,10 +254,10 @@ class SpaGCN:
         return self.y_pred
 
 
-
 class STLearn:
     def __init__(self):
         import stlearn
+
         self.stlearn = stlearn
 
     def fit(self, adata, img=None, **kwargs):
@@ -244,17 +275,20 @@ class STLearn:
         data_SME = data.copy()
         # apply stSME to normalise log transformed data
         # with weights from morphological Similarly and physcial distance
-        st.spatial.SME.SME_normalize(data_SME, use_data="raw",
-                                     weights="weights_matrix_pd_md")
-        data_SME.X = data_SME.obsm['raw_SME_normalized']
+        st.spatial.SME.SME_normalize(
+            data_SME, use_data="raw", weights="weights_matrix_pd_md"
+        )
+        data_SME.X = data_SME.obsm["raw_SME_normalized"]
         st.pp.scale(data_SME)
         st.em.run_pca(data_SME, n_comps=50)
 
         # K-means clustering on stSME normalised PCA
-        st.tl.clustering.kmeans(data_SME, n_clusters=17, use_data="X_pca", key_added="X_pca_kmeans")
+        st.tl.clustering.kmeans(
+            data_SME, n_clusters=17, use_data="X_pca", key_added="X_pca_kmeans"
+        )
 
         # louvain clustering on stSME normalised data
-        st.pp.neighbors(data_SME, n_neighbors=20, use_rep='X_pca')
+        st.pp.neighbors(data_SME, n_neighbors=20, use_rep="X_pca")
         st.tl.clustering.louvain(data_SME)
 
         self.stdata = data_SME

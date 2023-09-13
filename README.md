@@ -9,7 +9,7 @@ Please see our manuscript at [TBA].
 
 For best results, or to run the rpy2 based functionality, installing in 
 an isolated conda environment is recommended. A full installation including NeST and the provided examples can be
-created by:
+created by following the following steps:
 
 1. Clone the NeST repository
 2. Navigate inside the repository in a command prompt
@@ -21,8 +21,9 @@ created by:
 NeST can also be directly installed through pip as 
 `pip install nest-analysis`.
 
-Installation may take several minutes on a typical computer.
+Installation may take several minutes on a typical computer. If `conda` takes a long time, using `mamba` or `micromamba` instead may speed up the process (https://mamba.readthedocs.io/en/latest/index.html).
 
+A Docker container with NeST and a fully configured environment is also available at https://hub.docker.com/r/blwalker/nest, or as `docker pull blwalker/nest:latest`.
 
 ## Usage
 

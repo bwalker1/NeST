@@ -2,15 +2,24 @@ name: nest
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
-  - python=3.9
-  - nomkl
-  - R=4.1
+  - conda
+  - python>=3.9
+  - R>=4.2
   - r-devtools
   - r-ggpubr
   - r-rcppeigen
   - r-rspectra
+  - r-reticulate
+  - r-circlize
+  - r-rtsne
+  - r-biocmanager
+  - bioconductor-biobase
+  - bioconductor-complexheatmap
+  - bioconductor-biocneighbors
+  - bioconductor-bayesspace
+  - rpy2
+  - anndata2ri
   - numba<0.56
   - matplotlib<3.7
   - pandas<2
@@ -27,13 +36,9 @@ dependencies:
   - tqdm
   - networkx<3.0
   - statsmodels
-  - rpy2
-  - anndata2ri
   - squidpy
+  - mygene
+  - shapely
+  - goatools
+  - colorcet
   - pip
-  - pip:
-      - mygene
-      - shapely
-      - goatools
-      - python-igraph
-      - colorcet
