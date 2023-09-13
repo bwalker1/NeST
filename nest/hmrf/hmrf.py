@@ -57,19 +57,26 @@ class GaussianExpressionModel:
         self.means = (gamma_t @ self.pca) / gamma_sum.reshape(self.regions, 1)
 
         pca_minus_mean = self.pca.reshape((-1, 1, self.dim)) - self.means.reshape(
-            (1, self.regions, self.dim))
-        A = pca_minus_mean.reshape(-1, self.regions, self.dim, 1) * \
-            pca_minus_mean.reshape(-1, self.regions, 1, self.dim)
+            (1, self.regions, self.dim)
+        )
+        A = pca_minus_mean.reshape(
+            -1, self.regions, self.dim, 1
+        ) * pca_minus_mean.reshape(-1, self.regions, 1, self.dim)
 
-        self.covs = np.einsum('ij,jimn->imn', gamma_t, A) / gamma_sum.reshape((self.regions, 1, 1))
+        self.covs = np.einsum("ij,jimn->imn", gamma_t, A) / gamma_sum.reshape(
+            (self.regions, 1, 1)
+        )
 
     def compute_log_likelihood(self, gamma):
         # does not use gamma
         ll = np.zeros(shape=gamma.shape)
         for i in range(self.regions):
-            ll[:, i] = scipy.stats.multivariate_normal.logpdf(x=self.pca, mean=self.means[i, :],
-                                                              cov=self.covs[i, :, :],
-                                                              allow_singular=True)
+            ll[:, i] = scipy.stats.multivariate_normal.logpdf(
+                x=self.pca,
+                mean=self.means[i, :],
+                cov=self.covs[i, :, :],
+                allow_singular=True,
+            )
         return ll
 
 
@@ -90,13 +97,13 @@ class HMRF:
 
     def set_data(self, adata, regions):
         self.regions = regions
-        coords = adata.obsm['spatial']
+        coords = adata.obsm["spatial"]
 
         # This function automatically switches depending on which of threshold/k is not None
         self.adjacency = get_neighbor_adjacency(coords, eps=self.threshold, k=self.k)
 
     def compute_log_likelihood(self, gamma):
-        log_likelihood = (self.adjacency @ gamma)
+        log_likelihood = self.adjacency @ gamma
         if self.cap is not None:
             log_likelihood[log_likelihood > self.cap] = self.cap
 
@@ -108,11 +115,25 @@ class HMRF:
 
 
 class HMRFSegmentationModel:
-    def __init__(self, adata, regions, eps=None, k=None, model_weights=None, label_name=None,
-                 max_iterations=200, verbose=False, dim=16, pca=True, beta=1):
+    def __init__(
+        self,
+        adata,
+        regions,
+        eps=None,
+        k=None,
+        model_weights=None,
+        label_name=None,
+        max_iterations=200,
+        verbose=False,
+        dim=16,
+        pca=True,
+        beta=1,
+    ):
         self.adata = adata
-        self.likelihood_models = [GaussianExpressionModel(dim=dim, pca=pca),
-                                  HMRF(beta=beta, threshold=eps, k=k)]
+        self.likelihood_models = [
+            GaussianExpressionModel(dim=dim, pca=pca),
+            HMRF(beta=beta, threshold=eps, k=k),
+        ]
         # number of regions to segment into
         self.regions = regions
         self.model_weights = model_weights
@@ -131,8 +152,15 @@ class HMRFSegmentationModel:
         for model in self.likelihood_models:
             model.set_data(adata, self.regions)
 
-    def fit(self, max_iterations=None, update_labels=False, tol=1e-6, metric=None, verbose=False,
-            **kwargs):
+    def fit(
+        self,
+        max_iterations=None,
+        update_labels=False,
+        tol=1e-6,
+        metric=None,
+        verbose=False,
+        **kwargs,
+    ):
         ncells = len(self.adata)
 
         # if no current class information, run initialization
@@ -214,13 +242,16 @@ class HMRFSegmentationModel:
         data = pca.fit_transform(data)
 
         class_labels = sklearn.cluster.KMeans(n_clusters=self.regions).fit(data).labels_
-        labels_onehot = pd.get_dummies(class_labels, columns=range(self.regions)).to_numpy()
+        labels_onehot = pd.get_dummies(
+            class_labels, columns=range(self.regions)
+        ).to_numpy()
 
         # how much uncertainty to introduce in initial clusters
         eps = 0.1
 
         self.gamma = (1 - eps) * labels_onehot + eps / self.regions * np.ones(
-            shape=labels_onehot.shape)
+            shape=labels_onehot.shape
+        )
 
     @property
     def class_labels(self):

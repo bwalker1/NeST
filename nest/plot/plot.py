@@ -68,21 +68,34 @@ def spatial(adata, spot_size=None, **kwargs):
     if spot_size is None:
         spot_size = spot_size_preset
 
-    sc.pl.spatial(adata, img=img, scale_factor=scale, spot_size=spot_size,
-                  **kwargs)
+    sc.pl.spatial(adata, img=img, scale_factor=scale, spot_size=spot_size, **kwargs)
 
     try:
-        ax = kwargs['ax']
-        ax.set_xlabel('')
-        ax.set_ylabel('')
+        ax = kwargs["ax"]
+        ax.set_xlabel("")
+        ax.set_ylabel("")
     except (KeyError, AttributeError):
         pass
 
 
-def volcano(df, interaction=None, gene_list=None, ax=None, show=True, xlim=None, ylim=None,
-            axis_labels=True, fc_cutoff=0, p_cutoff=2, fontsize=None, xoffset=0, yoffset=0.5,
-            marker=None, title=None,
-            **kwargs):
+def volcano(
+    df,
+    interaction=None,
+    gene_list=None,
+    ax=None,
+    show=True,
+    xlim=None,
+    ylim=None,
+    axis_labels=True,
+    fc_cutoff=0,
+    p_cutoff=2,
+    fontsize=None,
+    xoffset=0,
+    yoffset=0.5,
+    marker=None,
+    title=None,
+    **kwargs,
+):
     if interaction is not None:
         # filter out the actual genes from the interaction
         ligand, receptor = interaction.split("_")
@@ -114,9 +127,17 @@ def volcano(df, interaction=None, gene_list=None, ax=None, show=True, xlim=None,
         for idx in range(len(x)):
             style[idx] = df.index[idx] in marker
 
-    ax = sns.scatterplot(x=x, y=y, hue=hue, palette=palette, legend=None, ax=ax, style=style,
-                         markers=['o', '^'],
-                         **kwargs)
+    ax = sns.scatterplot(
+        x=x,
+        y=y,
+        hue=hue,
+        palette=palette,
+        legend=None,
+        ax=ax,
+        style=style,
+        markers=["o", "^"],
+        **kwargs,
+    )
 
     for i, row in df.iterrows():
         x = row["log2(fc)"]
@@ -127,8 +148,13 @@ def volcano(df, interaction=None, gene_list=None, ax=None, show=True, xlim=None,
                 gene_xoffset, gene_yoffset = gene_list[i]
             except TypeError:
                 gene_xoffset, gene_yoffset = xoffset, yoffset
-            ax.text(x + gene_xoffset, y + gene_yoffset, i, fontsize=fontsize,
-                    horizontalalignment='right')
+            ax.text(
+                x + gene_xoffset,
+                y + gene_yoffset,
+                i,
+                fontsize=fontsize,
+                horizontalalignment="right",
+            )
 
     if xlim is not None:
         ax.set_xlim(xlim)
@@ -136,11 +162,11 @@ def volcano(df, interaction=None, gene_list=None, ax=None, show=True, xlim=None,
         ax.set_ylim(ylim)
 
     if not axis_labels:
-        ax.set_xlabel('')
-        ax.set_ylabel('')
+        ax.set_xlabel("")
+        ax.set_ylabel("")
     else:
-        ax.set_xlabel('log2(fc)', size=fontsize)
-        ax.set_ylabel('-log10(p)', size=fontsize)
+        ax.set_xlabel("log2(fc)", size=fontsize)
+        ax.set_ylabel("-log10(p)", size=fontsize)
     plt.xticks(size=fontsize)
     plt.yticks(size=fontsize)
 
@@ -155,12 +181,23 @@ def volcano(df, interaction=None, gene_list=None, ax=None, show=True, xlim=None,
     return ax
 
 
-def plot_similarity_map(adata, idx, adata_ref=None, ax=None, linewidth=0.5, linecolor="black", title="",
-                        show=False, **kwargs):
+def plot_similarity_map(
+    adata,
+    idx,
+    adata_ref=None,
+    ax=None,
+    linewidth=0.5,
+    linecolor="black",
+    title="",
+    show=False,
+    **kwargs,
+):
     if ax is None:
         fig, ax = plt.subplots()
     try:
-        scale_factor = list(adata.uns['spatial'].values())[0]['scalefactors']['tissue_hires_scalef']
+        scale_factor = list(adata.uns["spatial"].values())[0]["scalefactors"][
+            "tissue_hires_scalef"
+        ]
     except KeyError:
         if scale is not None:
             scale_factor = scale
@@ -169,24 +206,34 @@ def plot_similarity_map(adata, idx, adata_ref=None, ax=None, linewidth=0.5, line
     if adata_ref is None or adata_ref is adata:
         try:
             boundary = scale_factor * adata.uns["multi_boundaries"][str(idx)]
-            #ax.fill(boundary[:, 0], boundary[:, 1], color_string)
-            ax.plot(boundary[:, 0], boundary[:, 1], linewidth=linewidth, color=linecolor)
+            # ax.fill(boundary[:, 0], boundary[:, 1], color_string)
+            ax.plot(
+                boundary[:, 0], boundary[:, 1], linewidth=linewidth, color=linecolor
+            )
         except KeyError:
             # if no boundaries are computed, don't draw the boundary
             pass
-        
 
     arr = similarity_map(adata, idx=idx, adata_ref=adata_ref)
 
-    adata.obs['tmp'] = arr
-    spatial(adata, color="tmp", alpha_img=0.5, ax=ax, title=title, frameon=False, show=show,
-            **kwargs)
+    adata.obs["tmp"] = arr
+    spatial(
+        adata,
+        color="tmp",
+        alpha_img=0.5,
+        ax=ax,
+        title=title,
+        frameon=False,
+        show=show,
+        **kwargs,
+    )
 
 
 # Construct hotspot tree
 from matplotlib.patches import Rectangle, FancyBboxPatch, BoxStyle, Circle, Shadow
 from matplotlib.lines import Line2D
 from scipy.spatial.distance import jaccard
+
 try:
     from functools import cache
 except ImportError:
@@ -198,21 +245,34 @@ except ImportError:
         return wrapper
 
 
-def nested_structure_plot(adata, child_threshold=0.75, figsize=None, fontsize=None, legend=True, legend_ncol=None,
-                          alpha_high=0.8, alpha_low=0.1, ax=None, legend_kwargs=None):
+def nested_structure_plot(
+    adata,
+    child_threshold=0.75,
+    figsize=None,
+    fontsize=None,
+    legend=True,
+    legend_ncol=None,
+    alpha_high=0.8,
+    alpha_low=0.1,
+    ax=None,
+    legend_kwargs=None,
+):
     if legend_kwargs is None:
         legend_kwargs = {}
-
 
     overlap, A = compute_ch_overlap_matrix(adata, child_threshold)
     row, col = np.where(A)
     # find top level of res
     top_level = np.array(list(set(range(len(A))) - set(np.where(A)[0])))
     # compute length based on normalized size
-    top_level = {k: np.count_nonzero(pd.notnull(adata.obs[f'hotspots_multi_{k}'])) for k in top_level}
+    top_level = {
+        k: np.count_nonzero(pd.notnull(adata.obs[f"hotspots_multi_{k}"]))
+        for k in top_level
+    }
     total = np.sum(list(top_level.items()))
     top_level = {k: v / total for k, v in top_level.items()}
-    #print(row, col)
+
+    # print(row, col)
     # reorder hotspots by depth to get the right arrangement
     @cache
     def get_depth(idx, start):
@@ -224,12 +284,14 @@ def nested_structure_plot(adata, child_threshold=0.75, figsize=None, fontsize=No
     def set_alpha(color, alpha):
         return colors.to_hex(colors.to_rgba(color, alpha=alpha), keep_alpha=True)
 
-    num_elements = {int(k): np.count_nonzero(pd.notnull(adata.obs[f'hotspots_multi_{k}']))
-                    for k, v in adata.uns['multi_hotspots'].items()}
+    num_elements = {
+        int(k): np.count_nonzero(pd.notnull(adata.obs[f"hotspots_multi_{k}"]))
+        for k, v in adata.uns["multi_hotspots"].items()
+    }
 
     start_x = 0
     for k, v in sorted(top_level.items(), key=lambda x: -get_depth(x[0], 1)):
-        color = adata.uns['multi_hotspots_colors'][str(k)]
+        color = adata.uns["multi_hotspots_colors"][str(k)]
         width = v
         top_level[k] = [start_x, width, set_alpha(color, alpha_high), True]
         if row[col == k].size > 0:
@@ -259,7 +321,7 @@ def nested_structure_plot(adata, child_threshold=0.75, figsize=None, fontsize=No
                 were_children = True
                 cur_child_frac = overlap[c, k] / num_elements[k]
                 remaining_frac -= cur_child_frac
-                color_sub = set_alpha(adata.uns['multi_hotspots_colors'][str(c)], 0.8)
+                color_sub = set_alpha(adata.uns["multi_hotspots_colors"][str(c)], 0.8)
                 width_sub = cur_child_frac * width
                 mul = 1.0
                 next_level[c] = [start_x_sub, mul * width_sub, color_sub, True]
@@ -267,11 +329,19 @@ def nested_structure_plot(adata, child_threshold=0.75, figsize=None, fontsize=No
 
             # draw the remaining bit (possibly the whole bit if no children) in reduced alpha
             if remaining_frac < 1:
-                next_level[k] = [start_x_sub, width * remaining_frac, set_alpha(color, alpha_high), False]
+                next_level[k] = [
+                    start_x_sub,
+                    width * remaining_frac,
+                    set_alpha(color, alpha_high),
+                    False,
+                ]
             else:
-                next_level[k] = [start_x_sub, width * remaining_frac, set_alpha(color, alpha_low), False]
-
-
+                next_level[k] = [
+                    start_x_sub,
+                    width * remaining_frac,
+                    set_alpha(color, alpha_low),
+                    False,
+                ]
 
         if not were_children:
             break
@@ -292,36 +362,58 @@ def nested_structure_plot(adata, child_threshold=0.75, figsize=None, fontsize=No
         for k, [start_x, width, color, is_top] in level.items():
             # patch = Rectangle([start_x, start_y], width, height, facecolor=color)
             rounding_size = min(0.01, width / 2)
-            patch = FancyBboxPatch([start_x, start_y - height], width, height,
-                                   boxstyle=BoxStyle("Round",
-                                                     pad=-0.001,
-                                                     rounding_size=rounding_size),
-                                   facecolor=color, edgecolor=[1.0, 1.0, 1.0, 0.0])
+            patch = FancyBboxPatch(
+                [start_x, start_y - height],
+                width,
+                height,
+                boxstyle=BoxStyle("Round", pad=-0.001, rounding_size=rounding_size),
+                facecolor=color,
+                edgecolor=[1.0, 1.0, 1.0, 0.0],
+            )
             ax.add_patch(patch)
             if False and is_top and width > 0.02:
-                ax.text(start_x + width / 2, start_y - 0.101, k, ha='center', va='center',
-                        fontdict={'color': 'white', 'size': fontsize})
-        ax.text(-0.01, start_y - height / 2, f'Layer {idx + 1}', fontdict={'size': fontsize}, ha='right', va='center')
+                ax.text(
+                    start_x + width / 2,
+                    start_y - 0.101,
+                    k,
+                    ha="center",
+                    va="center",
+                    fontdict={"color": "white", "size": fontsize},
+                )
+        ax.text(
+            -0.01,
+            start_y - height / 2,
+            f"Layer {idx + 1}",
+            fontdict={"size": fontsize},
+            ha="right",
+            va="center",
+        )
         start_y -= 1.1 * height
 
     if legend:
         # TODO: make legend use the fontsize parameter
         legend_handles = []
-        for k, color in adata.uns['multi_hotspots_colors'].items():
+        for k, color in adata.uns["multi_hotspots_colors"].items():
             legend_handles.append(Circle([0, 0], radius=5, color=color, label=str(k)))
-        for k, v in  {'loc': "upper center", 'bbox_to_anchor': (1, 1),
-                  'ncol': legend_ncol, 'frameon': False}.items():
+        for k, v in {
+            "loc": "upper center",
+            "bbox_to_anchor": (1, 1),
+            "ncol": legend_ncol,
+            "frameon": False,
+        }.items():
             legend_kwargs.setdefault(k, v)
 
         ax.legend(handles=legend_handles, **legend_kwargs)
 
 
 def compute_ch_overlap_matrix(adata, threshold, filter_indirect=True):
-    num_ch = len(adata.uns['multi_hotspots'])
+    num_ch = len(adata.uns["multi_hotspots"])
 
     # compute the element list for each CH
-    element_list = {int(k): np.array(pd.notnull(adata.obs[f'hotspots_multi_{k}']))
-                    for k, v in adata.uns['multi_hotspots'].items()}
+    element_list = {
+        int(k): np.array(pd.notnull(adata.obs[f"hotspots_multi_{k}"]))
+        for k, v in adata.uns["multi_hotspots"].items()
+    }
     num_elements = {k: np.count_nonzero(v) for k, v in element_list.items()}
     overlap = np.zeros(shape=(num_ch, num_ch))
     A = np.zeros(shape=(num_ch, num_ch))

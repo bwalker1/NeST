@@ -4,6 +4,7 @@ from skimage.filters.thresholding import threshold_otsu
 from statsmodels.stats.multitest import fdrcorrection
 from scipy.stats import mannwhitneyu
 from scipy.spatial import Delaunay
+
 try:
     from scipy.sparse import csc_array
 except ImportError:
@@ -21,8 +22,14 @@ import pandas as pd
 import numpy as np
 
 
-def compute_gene_hotspots(adata, gene_list=None, verbose=False, return_hotspot_counts=False,
-                          log=True, **kwargs):
+def compute_gene_hotspots(
+    adata,
+    gene_list=None,
+    verbose=False,
+    return_hotspot_counts=False,
+    log=True,
+    **kwargs,
+):
     if gene_list is None:
         gene_list = adata.var_names
 
@@ -55,9 +62,14 @@ def compute_gene_hotspots(adata, gene_list=None, verbose=False, return_hotspot_c
         if len(inds) == 0:
             continue
 
-        regions = compute_hotspots(adata, input_data=inds,  # output_key=f"hotspots_{gene}",
-                                   output_key=None, return_regions=True,
-                                   input_threshold=cutoff, **kwargs)
+        regions = compute_hotspots(
+            adata,
+            input_data=inds,  # output_key=f"hotspots_{gene}",
+            output_key=None,
+            return_regions=True,
+            input_threshold=cutoff,
+            **kwargs,
+        )
 
         if regions is not None:
             num_hotspot_genes += 1
@@ -76,10 +88,19 @@ def compute_gene_hotspots(adata, gene_list=None, verbose=False, return_hotspot_c
         return num_hotspot_genes
 
 
-def compute_hotspots(adata, min_samples, eps, input_key=None, output_key=None,
-                     input_data=None, return_regions=False,
-                     min_size=None,
-                     input_threshold=None, core_only=False, method=None):
+def compute_hotspots(
+    adata,
+    min_samples,
+    eps,
+    input_key=None,
+    output_key=None,
+    input_data=None,
+    return_regions=False,
+    min_size=None,
+    input_threshold=None,
+    core_only=False,
+    method=None,
+):
     if input_data is not None:
         inds = input_data
     else:
@@ -99,7 +120,7 @@ def compute_hotspots(adata, min_samples, eps, input_key=None, output_key=None,
 
         inds = np.where(v)[0]
 
-    coords = adata.obsm['spatial']
+    coords = adata.obsm["spatial"]
     X = coords[inds]
     if X.shape[0] < min_size:
         return None
@@ -142,8 +163,9 @@ def compute_hotspots(adata, min_samples, eps, input_key=None, output_key=None,
 
     n_regions = np.max(regions)
     if n_regions > 0:
-        regions = pd.Categorical(regions,
-                                 categories=np.arange(1, n_regions + 1)).remove_unused_categories()
+        regions = pd.Categorical(
+            regions, categories=np.arange(1, n_regions + 1)
+        ).remove_unused_categories()
         if output_key is not None:
             adata.obs[output_key] = regions
     else:
@@ -155,8 +177,15 @@ def compute_hotspots(adata, min_samples, eps, input_key=None, output_key=None,
         return n_regions
 
 
-def hotspot_marker_genes(adata, eps, verbose=False, alpha=0.01, exclude_interaction=True,
-                         neighborhood=True, interactions=None):
+def hotspot_marker_genes(
+    adata,
+    eps,
+    verbose=False,
+    alpha=0.01,
+    exclude_interaction=True,
+    neighborhood=True,
+    interactions=None,
+):
     """
     For each hotspot, identify genes that are differentially expressed against baselines of:
         1. other spatially nearby (but inactive cells)
@@ -164,7 +193,7 @@ def hotspot_marker_genes(adata, eps, verbose=False, alpha=0.01, exclude_interact
     """
 
     filtered_interactions = adata.uns["interactions"]
-    A = get_neighbor_adjacency(adata.obsm['spatial'], eps=eps)
+    A = get_neighbor_adjacency(adata.obsm["spatial"], eps=eps)
 
     out = {v: {} for v in filtered_interactions["interaction_name"]}
 
@@ -187,22 +216,30 @@ def hotspot_marker_genes(adata, eps, verbose=False, alpha=0.01, exclude_interact
             if np.isnan(v):
                 continue
             hotspot_array = adata.obs[f"hotspots_{interaction}"] == v
-            neighbor_array = np.logical_and(A.dot(np.array(hotspot_array, dtype=np.float64)) > 0,
-                                            np.logical_not(hotspot_array))
+            neighbor_array = np.logical_and(
+                A.dot(np.array(hotspot_array, dtype=np.float64)) > 0,
+                np.logical_not(hotspot_array),
+            )
             hotspot_inds = np.where(hotspot_array)[0]
             neighbor_inds = np.where(neighbor_array)[0]
-            other_active_inds = \
-                np.where(np.logical_and(active_array, np.logical_not(hotspot_array)))[0]
+            other_active_inds = np.where(
+                np.logical_and(active_array, np.logical_not(hotspot_array))
+            )[0]
 
             # test differential expression against both
             # comparing hotspot to all active
-            if np.min([len(hotspot_inds), len(other_active_inds), len(neighbor_inds)]) < 10:
+            if (
+                np.min([len(hotspot_inds), len(other_active_inds), len(neighbor_inds)])
+                < 10
+            ):
                 # very few cells - skip
                 continue
 
             reg1 = differential_expression(adata, hotspot_inds, other_active_inds)
             significant = reg1["-log10(p)"] > cutoff
-            reg2 = differential_expression(adata, hotspot_inds, neighbor_inds, alpha=alpha)
+            reg2 = differential_expression(
+                adata, hotspot_inds, neighbor_inds, alpha=alpha
+            )
 
             # comparing hotspot to neighboring non-active
             if neighborhood:
@@ -217,8 +254,9 @@ def hotspot_marker_genes(adata, eps, verbose=False, alpha=0.01, exclude_interact
 
             # filter out the interaction genes themsleves
             if exclude_interaction:
-                selected = np.logical_and(selected,
-                                          np.logical_not(reg1.index.isin([ligand, receptor])))
+                selected = np.logical_and(
+                    selected, np.logical_not(reg1.index.isin([ligand, receptor]))
+                )
 
             # return a list of genes, sorted by magnitude of fold change
             genes = reg1.index[selected]
@@ -233,7 +271,9 @@ def hotspot_marker_genes(adata, eps, verbose=False, alpha=0.01, exclude_interact
     return out
 
 
-def differential_expression(adata, inds_a, inds_b, alpha=0.001, max_fc=10, use_raw=True):
+def differential_expression(
+    adata, inds_a, inds_b, alpha=0.001, max_fc=10, use_raw=True
+):
     if len(inds_a) == 0 or len(inds_b) == 0:
         raise ValueError("Indices list must be non-empty")
 
@@ -260,7 +300,9 @@ def differential_expression(adata, inds_a, inds_b, alpha=0.001, max_fc=10, use_r
     fc[fc > max_fc] = max_fc
     fc[fc < -max_fc] = -max_fc
 
-    return pd.DataFrame({'log2(fc)': fc, '-log10(p)': pvalue}, index=adata_source.var_names)
+    return pd.DataFrame(
+        {"log2(fc)": fc, "-log10(p)": pvalue}, index=adata_source.var_names
+    )
 
 
 def gene_regulation(adata):
@@ -274,7 +316,10 @@ def gene_regulation(adata):
         interaction_name = row["interaction_name"]
         print(interaction_name)
         try:
-            v = np.array(adata.obs[f"activity_{interaction_name}"]) > cutoffs[interaction_name]
+            v = (
+                np.array(adata.obs[f"activity_{interaction_name}"])
+                > cutoffs[interaction_name]
+            )
         except KeyError:
             # possible that an interaction has active cells but no hotspots so it doesn't get a
             # key here
@@ -282,7 +327,9 @@ def gene_regulation(adata):
         active_inds = np.logical_and(expressed_inds, v)
         inactive_inds = np.logical_and(expressed_inds, np.logical_not(v))
 
-        res[interaction_name] = differential_expression(adata, active_inds, inactive_inds)
+        res[interaction_name] = differential_expression(
+            adata, active_inds, inactive_inds
+        )
 
     return res
 
@@ -292,11 +339,13 @@ def get_all_hotspot_keys(adata):
 
 
 def smooth(adata, alpha, k=6, threshold=None):
-    smoothing_matrix = normalize(get_neighbor_adjacency(adata.obsm['spatial'], k=k), norm='l1',
-                                 axis=1)
+    smoothing_matrix = normalize(
+        get_neighbor_adjacency(adata.obsm["spatial"], k=k), norm="l1", axis=1
+    )
     if threshold is not None:
-        smoothing_matrix = smoothing_matrix.multiply(get_neighbor_adjacency(adata.obsm['spatial'],
-                                                                            eps=threshold))
+        smoothing_matrix = smoothing_matrix.multiply(
+            get_neighbor_adjacency(adata.obsm["spatial"], eps=threshold)
+        )
     data = adata.X
     data = (1 - alpha) * data + alpha * (smoothing_matrix @ data)
     adata.X = data
@@ -311,13 +360,17 @@ def _compute_cutoff(gene_expression, log=False):
     return cutoff
 
 
-def compute_hotspot_boundary(adata, hotspot_key, region, alpha_max=None, alpha_min=0.001):
+def compute_hotspot_boundary(
+    adata, hotspot_key, region, alpha_max=None, alpha_min=0.001
+):
     if alpha_max is None:
         alpha_max = 10
     v = adata.obs[hotspot_key]
 
-    coords = adata.obsm['spatial']
-    boundary = try_alpha_shape(coords[v == region, :], alpha_max=alpha_max, alpha_min=alpha_min)
+    coords = adata.obsm["spatial"]
+    boundary = try_alpha_shape(
+        coords[v == region, :], alpha_max=alpha_max, alpha_min=alpha_min
+    )
     return boundary
 
 
@@ -337,7 +390,7 @@ def alpha_shape(coords, alpha):
         raise ValueError
 
     tri = Delaunay(coords)
-    triangles = coords[tri.vertices]
+    triangles = coords[tri.simplices]
     edge_points = alpha_shape_sub(triangles, alpha)
     m = geometry.MultiLineString(edge_points.tolist())
     triangles = list(polygonize(m))
@@ -349,14 +402,20 @@ def alpha_shape(coords, alpha):
     return res
 
 
-#@jit
+# @jit
 def alpha_shape_sub(triangles, alpha):
-    a = ((triangles[:, 0, 0] - triangles[:, 1, 0]) ** 2 + (
-            triangles[:, 0, 1] - triangles[:, 1, 1]) ** 2) ** 0.5
-    b = ((triangles[:, 1, 0] - triangles[:, 2, 0]) ** 2 + (
-            triangles[:, 1, 1] - triangles[:, 2, 1]) ** 2) ** 0.5
-    c = ((triangles[:, 2, 0] - triangles[:, 0, 0]) ** 2 + (
-            triangles[:, 2, 1] - triangles[:, 0, 1]) ** 2) ** 0.5
+    a = (
+        (triangles[:, 0, 0] - triangles[:, 1, 0]) ** 2
+        + (triangles[:, 0, 1] - triangles[:, 1, 1]) ** 2
+    ) ** 0.5
+    b = (
+        (triangles[:, 1, 0] - triangles[:, 2, 0]) ** 2
+        + (triangles[:, 1, 1] - triangles[:, 2, 1]) ** 2
+    ) ** 0.5
+    c = (
+        (triangles[:, 2, 0] - triangles[:, 0, 0]) ** 2
+        + (triangles[:, 2, 1] - triangles[:, 0, 1]) ** 2
+    ) ** 0.5
     s = (a + b + c) / 2.0
     areas = (s * (s - a) * (s - b) * (s - c)) ** 0.5
     circums = a * b * c / (4.0 * areas)
@@ -384,22 +443,23 @@ def try_alpha_shape(coords, alpha_max, alpha_min):
         except (NotImplementedError, ValueError):
             # This error is raised if the resulting geometry is not simply connected
             alpha = alpha * 0.5
-            #print(alpha)
+            # print(alpha)
             if alpha < alpha_min:
                 return None
 
 
-def hotspot_closure(adata, edge_radius=0.001, processes=4, alpha_max=10,
-                    verbose=False):
+def hotspot_closure(adata, edge_radius=0.001, processes=4, alpha_max=10, verbose=False):
     with Pool(processes) as p:
         keys = [v for v in adata.obs if "hotspots_" in v]
-        points = adata.obsm['spatial']
+        points = adata.obsm["spatial"]
 
-        boundaries = p.imap(hotspot_closure_sub, hotspot_closure_generator(adata, keys),
-                            chunksize=1)
+        boundaries = p.imap(
+            hotspot_closure_sub, hotspot_closure_generator(adata, keys), chunksize=1
+        )
         if verbose:
-            boundaries = tqdm(boundaries,
-                              total=len(list(hotspot_closure_generator(adata, keys))))
+            boundaries = tqdm(
+                boundaries, total=len(list(hotspot_closure_generator(adata, keys)))
+            )
 
         for key, c, boundary in boundaries:
             if boundary is None:
@@ -423,27 +483,30 @@ def hotspot_closure(adata, edge_radius=0.001, processes=4, alpha_max=10,
                 continue
     """
 
+
 def hotspot_closure_generator(adata, keys):
     for key in keys:
         for c in adata.obs[key].cat.categories:
             v = adata.obs[key]
 
-            coords = adata.obsm['spatial']
+            coords = adata.obsm["spatial"]
             subcoords = coords[v == c, :].copy()
             yield (key, c, subcoords)
 
+
 def hotspot_closure_sub(args):
     key, c, subcoords = args
-    #return (key, c, None)
+    # return (key, c, None)
     try:
-        return (key, c, try_alpha_shape(subcoords, alpha_max=10,
-                               alpha_min=0.001))
+        return (key, c, try_alpha_shape(subcoords, alpha_max=10, alpha_min=0.001))
     except ValueError:
         return (key, c, None)
 
 
 def clear_hotspots(adata):
-    adata.obs.drop(adata.obs.filter(regex='hotspots').columns.tolist(), axis=1, inplace=True)
+    adata.obs.drop(
+        adata.obs.filter(regex="hotspots").columns.tolist(), axis=1, inplace=True
+    )
 
 
 def get_min_samples_from_density(adata, eps, density):
@@ -453,12 +516,12 @@ def get_min_samples_from_density(adata, eps, density):
     spots within neighbor_eps being active.
     """
     # Compute mean number of other spots within neighbor_eps
-    coords = adata.obsm['spatial']
+    coords = adata.obsm["spatial"]
     tree = BallTree(coords)
     n_cells = len(coords)
 
     nearby_col = tree.query_radius(coords, eps)
     mean_neighbors = np.mean([len(v) for v in nearby_col]) - 1
-    min_samples  = np.ceil(density * mean_neighbors).astype(np.int_)
+    min_samples = np.ceil(density * mean_neighbors).astype(np.int_)
 
     return min_samples

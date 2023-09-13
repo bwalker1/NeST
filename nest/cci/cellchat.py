@@ -9,8 +9,10 @@ class CellChat:
             from rpy2.robjects.packages import importr
             import anndata2ri
         except ImportError:
-            raise ImportError("Optional dependencies rpy2 and anndata2ri must be installed to"
-                              " run the Cellchat wrapper.")
+            raise ImportError(
+                "Optional dependencies rpy2 and anndata2ri must be installed to"
+                " run the Cellchat wrapper."
+            )
 
         anndata2ri.activate()
         self.robjects = robjects
@@ -32,7 +34,8 @@ class CellChat:
         # discard extraneous information (which may or may not convert into R)
         adata.obs = sc.get.obs_df(adata, keys=["class"])
 
-        self.robjects.r('''
+        self.robjects.r(
+            """
                     f <- function(s, group.by) {
                         assay(s, "logcounts") = assay(s, "X")
 
@@ -59,8 +62,9 @@ class CellChat:
 
                         df.net
                     }
-                ''')
+                """
+        )
 
-        out = self.robjects.r['f'](adata, group_by)
+        out = self.robjects.r["f"](adata, group_by)
 
         return out

@@ -8,6 +8,7 @@ from nest.data import load_database
 
 from scipy.stats import mannwhitneyu
 from scipy.stats.mstats import gmean
+
 try:
     from scipy.sparse import csc_array
 except ImportError:
@@ -17,11 +18,21 @@ except ImportError:
 import warnings
 
 
-def compute_activity(adata, secreted_std, contact_threshold, permutations=100, K=0.5,
-                     min_active_count=1,
-                     sig_threshold=0.95, verbose=False, perform_permutation=False,
-                     secreted_threshold_cutoff=2, save_activity=False,
-                     interactions=None, z_key=None):
+def compute_activity(
+    adata,
+    secreted_std,
+    contact_threshold,
+    permutations=100,
+    K=0.5,
+    min_active_count=1,
+    sig_threshold=0.95,
+    verbose=False,
+    perform_permutation=False,
+    secreted_threshold_cutoff=2,
+    save_activity=False,
+    interactions=None,
+    z_key=None,
+):
     """
     Compute the activity scores for all interactions across cells in adata. All output is stored in adata
     :param adata: anndata object
@@ -49,14 +60,16 @@ def compute_activity(adata, secreted_std, contact_threshold, permutations=100, K
 
     # Get a reduced view of adata containing only relevant genes
     adata_filtered = filter_adata(adata)
-    compute_spatial_transport_matrices(adata,
-                                       secreted_std=secreted_std,
-                                       secreted_threshold_cutoff=secreted_threshold_cutoff,
-                                       contact_threshold=contact_threshold,
-                                       z_key=z_key)
-    transport_secreted = adata.obsp['transport_secreted']
+    compute_spatial_transport_matrices(
+        adata,
+        secreted_std=secreted_std,
+        secreted_threshold_cutoff=secreted_threshold_cutoff,
+        contact_threshold=contact_threshold,
+        z_key=z_key,
+    )
+    transport_secreted = adata.obsp["transport_secreted"]
     try:
-        transport_contact = adata.obsp['transport_contact']
+        transport_contact = adata.obsp["transport_contact"]
     except KeyError:
         # TODO: implement contact + 3D
         transport_contact = None
@@ -159,20 +172,23 @@ def compute_activity(adata, secreted_std, contact_threshold, permutations=100, K
     activity_matrix = pd.DataFrame(activity_matrix_cols, index=adata.obs.index)
 
     # Filter out inactive interactions
-    filtered_interactions = filtered_interactions[filtered_interactions["interaction_name"].isin(activity_matrix_cols)]
+    filtered_interactions = filtered_interactions[
+        filtered_interactions["interaction_name"].isin(activity_matrix_cols)
+    ]
     adata.uns["interactions"] = filtered_interactions
 
     if perform_permutation:
         adata.uns["activity_significance_cutoff"] = cutoffs
     if save_activity:
-        adata.uns['activity_matrix'] = activity_matrix
+        adata.uns["activity_matrix"] = activity_matrix
         adata.obs = pd.concat([adata.obs, activity_matrix], axis=1)
 
     return activity_matrix
 
 
-def filter_interactions(interaction, adata, filter_same=True, pathway_filter=None,
-                        interaction_filter=None):
+def filter_interactions(
+    interaction, adata, filter_same=True, pathway_filter=None, interaction_filter=None
+):
     """
     Given a particular adata object, filter out only the LR interactions in the database for which
     both the L and the R are present in the genes in the adata. Modifies the database accordingly.
@@ -189,7 +205,10 @@ def filter_interactions(interaction, adata, filter_same=True, pathway_filter=Non
         if pathway_filter is not None and pathway not in pathway_filter:
             continue
 
-        if interaction_filter is not None and row["interaction_name"] not in interaction_filter:
+        if (
+            interaction_filter is not None
+            and row["interaction_name"] not in interaction_filter
+        ):
             continue
 
         ligand, receptor = row["ligand"], row["receptor"]
@@ -225,8 +244,9 @@ def filter_adata(adata):
     receptor_genes = np.unique(filtered_interactions["receptor"])
     ligand_receptor_genes = np.unique(np.concatenate((ligand_genes, receptor_genes)))
     gene_names = np.array([v for v in adata.var_names])
-    ligand_receptor_gene_inds = np.array([np.where(gene_names == gene)[0]
-                                          for gene in ligand_receptor_genes]).flatten()
+    ligand_receptor_gene_inds = np.array(
+        [np.where(gene_names == gene)[0] for gene in ligand_receptor_genes]
+    ).flatten()
     adata_filtered = adata[:, ligand_receptor_gene_inds]
     adata_filtered.var_names = gene_names[ligand_receptor_gene_inds]
     return adata_filtered
@@ -263,8 +283,9 @@ def combine_pathway(filtered_interactions, active_matrix, type="arithmetic"):
     Take an activity matrix and combine all activity on a per-pathway basis
     """
 
-    interactions_by_pathway = {k: [] for k in
-                               np.unique(filtered_interactions["pathway_name"])}
+    interactions_by_pathway = {
+        k: [] for k in np.unique(filtered_interactions["pathway_name"])
+    }
     for _, row in filtered_interactions.iterrows():
         interactions_by_pathway[row["pathway_name"]].append(row["interaction_name"])
     res = {}
@@ -291,8 +312,9 @@ def combine_receptor(filtered_interactions, active_matrix, type="arithmetic"):
     Take an activity matrix and combine all activity on a per-receptor basis
     """
 
-    interactions_by_receptor = {k: [] for k in
-                                np.unique(filtered_interactions["receptor"])}
+    interactions_by_receptor = {
+        k: [] for k in np.unique(filtered_interactions["receptor"])
+    }
     for _, row in filtered_interactions.iterrows():
         interactions_by_receptor[row["receptor"]].append(row["interaction_name"])
 
@@ -337,10 +359,13 @@ def cell_type_activity(adata, format, type_label="class"):
     for k, t in enumerate(types):
         # test for significance
         active_matrix_sub = active_matrix_array[(adata.obs[type_label] == t)]
-        sub_activity = np.mean(np.array(active_matrix)[(adata.obs[type_label] == t)], axis=0)
+        sub_activity = np.mean(
+            np.array(active_matrix)[(adata.obs[type_label] == t)], axis=0
+        )
 
-        U, p = mannwhitneyu(active_matrix_sub, active_matrix_array,
-                            alternative='greater')
+        U, p = mannwhitneyu(
+            active_matrix_sub, active_matrix_array, alternative="greater"
+        )
         significant = p < 0.05
         rows.append(sub_activity)
         significant_mat[k, :] = significant

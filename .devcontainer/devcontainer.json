@@ -1,0 +1,34 @@
+{
+	"name": "Dev Container NeST",
+
+    "build":{
+        "dockerfile": "Dockerfile",
+        "context": "..",
+        "target": "dev",
+        "args": {
+            // Setting "gpu" will install extra gpu packages to be able to run spagcn
+            // "type": "gpu"
+            "type": "base"
+        }
+    },
+
+    "hostRequirements": {"gpu": "optional"},
+
+    "onCreateCommand": "pip install -e .",
+
+	"customizations": {
+		"vscode": {
+			"settings":{
+				"python.defaultInterpreterPath": "/opt/conda/bin/python",
+				"python.terminal.activateEnvironment": false
+			},
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-azuretools.vscode-docker",
+				"ms-toolsai.jupyter",
+				"ms-toolsai.jupyter-renderers"
+			]
+		}
+	}
+}

@@ -17,19 +17,19 @@ def get_activity_dataframe(adata):
 
 def write(adata, name):
     adata = adata.copy()
-    adata.obs.to_pickle(f'{name}.pkl')
+    adata.obs.to_pickle(f"{name}.pkl")
     adata.obs = pd.DataFrame(index=adata.obs.index)
-    adata.write(f'{name}.h5ad')
+    adata.write(f"{name}.h5ad")
 
 
 def read(name):
-    adata = anndata.read_h5ad(f'{name}.h5ad')
-    adata.obs = pd.read_pickle(f'{name}.pkl')
+    adata = anndata.read_h5ad(f"{name}.h5ad")
+    adata.obs = pd.read_pickle(f"{name}.pkl")
     return adata
 
 
 def spatial_smoothing(adata, mode=None, cutoff=30):
-    smoothing_matrix = get_neighbor_adjacency(adata.obsm['spatial'], eps=cutoff)
+    smoothing_matrix = get_neighbor_adjacency(adata.obsm["spatial"], eps=cutoff)
     data = adata.X
     data2 = np.empty(data.shape)
     for idx in tqdm(range(smoothing_matrix.shape[0])):
@@ -54,7 +54,7 @@ def get_neighbor_adjacency(coords, eps=None, k=None, weight=None, return_row_col
     tree = BallTree(coords)
     n_cells = len(coords)
     if eps is not None and k is not None:
-        warnings.warn('k is ignored if eps is provided')
+        warnings.warn("k is ignored if eps is provided")
 
     if eps is not None:
         nearby_col, dist = tree.query_radius(coords, eps, return_distance=True)
@@ -66,8 +66,9 @@ def get_neighbor_adjacency(coords, eps=None, k=None, weight=None, return_row_col
                 coords.append(weight(dist[i]))
             nearby_row.append(i * np.ones(shape=col.shape, dtype=col.dtype))
     elif k is not None:
-        nearby_col = tree.query(coords, k,
-                                return_distance=False)  # [:, 1:]  # remove self connections
+        nearby_col = tree.query(
+            coords, k, return_distance=False
+        )  # [:, 1:]  # remove self connections
         nearby_row = []
         for i, col in enumerate(nearby_col):
             nearby_row.append(i * np.ones(shape=col.shape, dtype=col.dtype))
@@ -81,8 +82,7 @@ def get_neighbor_adjacency(coords, eps=None, k=None, weight=None, return_row_col
     else:
         coords = np.concatenate(coords)
 
-    nearby = csr_matrix((coords, (nearby_row, nearby_col)),
-                        shape=(n_cells, n_cells))
+    nearby = csr_matrix((coords, (nearby_row, nearby_col)), shape=(n_cells, n_cells))
 
     if return_row_col:
         return nearby, nearby_row, nearby_col

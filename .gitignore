@@ -150,15 +150,8 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
+.vscode
 .DS_Store
-examples/images/*
-examples/data
 data/
-
-# goatools related files
-examples/gene2go
-examples/go-basic.obo
-examples/go_results/*
-examples/gene_result.txt
-
-examples/genes_ncbi_10090_proteincoding.py
+notebooks/
+examples/*/**
