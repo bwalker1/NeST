@@ -1,5 +1,8 @@
 # NeST
 
+[![DOI](https://zenodo.org/badge/631040801.svg)](https://zenodo.org/badge/latestdoi/631040801)
+
+
 ## Analysis of nested hierarchical structure in spatial transcriptomic data
 
 Please see our manuscript at [TBA].
