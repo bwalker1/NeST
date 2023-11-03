@@ -5,7 +5,7 @@
 
 ## Analysis of nested hierarchical structure in spatial transcriptomic data
 
-Please see our manuscript at [TBA].
+Please see our manuscript at [https://www.nature.com/articles/s41467-023-42343-x](https://www.nature.com/articles/s41467-023-42343-x).
 
 ## Installation
 
